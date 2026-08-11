@@ -1,0 +1,12 @@
+{
+  "recommendations": [
+    "vscjava.vscode-java-pack",
+    "vmware.vscode-boot-dev-pack",
+    "redhat.vscode-yaml",
+    "redhat.vscode-xml",
+    "editorconfig.editorconfig",
+    "mtxr.sqltools",
+    "mtxr.sqltools-driver-pg",
+    "josevseb.google-java-format-for-vs-code"
+  ]
+}

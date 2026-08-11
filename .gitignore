@@ -1,0 +1,29 @@
+# Build
+target/
+*.class
+
+# IDE
+.idea/
+*.iml
+*.iws
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/settings.json
+.settings/
+.classpath
+.project
+*.session.sql
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Segredos / configuração de produção — nunca commitados
+# (mantemos application-prod.yml.example versionado como referência)
+application-prod.yml
+.env
+*.env

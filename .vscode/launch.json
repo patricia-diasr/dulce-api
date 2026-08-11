@@ -1,0 +1,16 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "DulceAPIApplication (dev)",
+      "request": "launch",
+      "mainClass": "com.dulce.backend.DulceAPIApplication",
+      "projectName": "dulce-api",
+      "env": {
+        "SPRING_PROFILES_ACTIVE": "dev",
+        "APP_JWT_SECRET": "segredo-de-desenvolvimento-troque-antes-de-producao"
+      }
+    }
+  ]
+}
