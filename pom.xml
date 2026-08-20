@@ -7,8 +7,6 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <!-- Spring Boot 4.1.x (sobre Spring Framework 7) — conferir o último patch em
-             https://spring.io/projects/spring-boot antes do primeiro build. -->
         <version>4.1.0</version>
         <relativePath/>
     </parent>
@@ -101,7 +99,6 @@
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <!-- Confirmar versão compatível com Spring Boot 4.x / Spring Framework 7 antes do build. -->
             <version>3.0.0</version>
         </dependency>
 
@@ -134,6 +131,7 @@
                     <java>
                         <googleJavaFormat>
                             <version>1.28.0</version>
+                            <style>AOSP</style>
                         </googleJavaFormat>
                     </java>
                 </configuration>

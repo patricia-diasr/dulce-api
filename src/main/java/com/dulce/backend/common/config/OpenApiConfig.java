@@ -8,13 +8,14 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class OpenApiConfig {
 
-  @Bean
-  public OpenAPI dulceOpenApi() {
-    return new OpenAPI()
-        .info(
-            new Info()
-                .title("Dulce API")
-                .description("API do sistema de gestão de encomendas da confeitaria Dulce.")
-                .version("v0"));
-  }
+    @Bean
+    public OpenAPI dulceOpenApi() {
+        return new OpenAPI()
+                .info(
+                        new Info()
+                                .title("Dulce API")
+                                .description(
+                                        "API do sistema de gestão de encomendas da confeitaria Dulce.")
+                                .version("v0"));
+    }
 }

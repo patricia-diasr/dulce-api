@@ -20,13 +20,10 @@ springdoc:
   api-docs:
     path: /api-docs
 
-# Configurações próprias da aplicação (fora do namespace "spring")
 app:
   cors:
-    # Origem(ns) permitida(s) para o frontend, separadas por vírgula
     allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173}
   jwt:
-    # Obrigatório via variável de ambiente — sem valor padrão de propósito
     secret: ${APP_JWT_SECRET}
     expiration-minutes: ${APP_JWT_EXPIRATION_MINUTES:480}
   verification-code:
