@@ -8,26 +8,23 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
-/**
- * Libera o(s) domínio(s) do portal (público/administrativo) definidos em {@code
- * app.cors.allowed-origins}.
- */
 @Configuration
 public class CorsConfig {
 
-  @Value("${app.cors.allowed-origins}")
-  private String allowedOrigins;
+    @Value("${app.cors.allowed-origins}")
+    private String allowedOrigins;
 
-  @Bean
-  public CorsFilter corsFilter() {
-    CorsConfiguration configuration = new CorsConfiguration();
-    configuration.setAllowedOrigins(List.of(allowedOrigins.split(",")));
-    configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-    configuration.setAllowedHeaders(List.of("*"));
-    configuration.setAllowCredentials(true);
+    @Bean
+    public CorsFilter corsFilter() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of(allowedOrigins.split(",")));
+        configuration.setAllowedMethods(
+                List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true);
 
-    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-    source.registerCorsConfiguration("/**", configuration);
-    return new CorsFilter(source);
-  }
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return new CorsFilter(source);
+    }
 }

@@ -175,6 +175,18 @@ CREATE TABLE audit_log (
 );
 
 -- ----------------------------------------------------------------------------
+-- login_verification_code
+-- ----------------------------------------------------------------------------
+CREATE TABLE login_verification_code (
+    id           BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    customer_id  BIGINT NOT NULL REFERENCES customer(id),
+    code         VARCHAR(10) NOT NULL,
+    expires_at   TIMESTAMPTZ NOT NULL,
+    used_at      TIMESTAMPTZ,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- ----------------------------------------------------------------------------
 -- Índices de apoio às consultas mais comuns (agenda, dashboard, histórico)
 -- ----------------------------------------------------------------------------
 CREATE INDEX idx_cake_order_customer_id ON cake_order (customer_id);
@@ -186,3 +198,4 @@ CREATE INDEX idx_notification_history_customer_id ON notification_history (custo
 CREATE INDEX idx_notification_history_cake_order_id ON notification_history (cake_order_id);
 CREATE INDEX idx_schedule_block_block_date ON schedule_block (block_date);
 CREATE INDEX idx_audit_log_table_record ON audit_log (table_name, record_id);
+CREATE INDEX idx_login_verification_code_customer_id ON login_verification_code (customer_id);
