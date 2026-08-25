@@ -3,9 +3,10 @@ package com.dulce.backend.auth;
 import com.dulce.backend.auth.dto.AuthResponse;
 import com.dulce.backend.customer.Customer;
 import com.dulce.backend.customer.CustomerRepository;
-import com.dulce.backend.notification.LoginCodeNotifier;
+import com.dulce.backend.notification.NotificationService;
 import java.security.SecureRandom;
 import java.time.OffsetDateTime;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,19 +18,19 @@ public class CustomerLoginService {
 
     private final CustomerRepository customerRepository;
     private final LoginVerificationCodeRepository codeRepository;
-    private final LoginCodeNotifier loginCodeNotifier;
+    private final NotificationService notificationService;
     private final JwtService jwtService;
     private final long codeExpirationMinutes;
 
     public CustomerLoginService(
             CustomerRepository customerRepository,
             LoginVerificationCodeRepository codeRepository,
-            LoginCodeNotifier loginCodeNotifier,
+            NotificationService notificationService,
             JwtService jwtService,
             @Value("${app.verification-code.expiration-minutes}") long codeExpirationMinutes) {
         this.customerRepository = customerRepository;
         this.codeRepository = codeRepository;
-        this.loginCodeNotifier = loginCodeNotifier;
+        this.notificationService = notificationService;
         this.jwtService = jwtService;
         this.codeExpirationMinutes = codeExpirationMinutes;
     }
@@ -50,8 +51,7 @@ public class CustomerLoginService {
                             verification.setCreatedAt(OffsetDateTime.now());
                             codeRepository.save(verification);
 
-                            loginCodeNotifier.notifyLoginCode(
-                                    customer.getName(), customer.getEmail(), code);
+                            sendCodeByEmail(customer, code);
                         });
     }
 
@@ -74,7 +74,18 @@ public class CustomerLoginService {
         codeRepository.save(verification);
 
         return jwtService.generateAuthResponse(
-                customer.getEmail(), Role.CUSTOMER, customer.getId());
+                customer.getEmail(), Role.CUSTOMER, customer.getId(), customer.getName());
+    }
+
+    private void sendCodeByEmail(Customer customer, String code) {
+        Map<String, Object> variables =
+                Map.of(
+                        "customerName", customer.getName(),
+                        "code", code,
+                        "expirationMinutes", codeExpirationMinutes);
+
+        notificationService.send(
+                customer.getEmail(), "Seu código de acesso Dulce", "email/login-code", variables);
     }
 
     private String generateCode() {

@@ -30,6 +30,7 @@ public class AdminLoginService {
             throw new InvalidCredentialsException();
         }
 
-        return jwtService.generateAuthResponse(admin.getEmail(), Role.ADMIN, admin.getId());
+        return jwtService.generateAuthResponse(
+                admin.getEmail(), Role.ADMIN, admin.getId(), admin.getName());
     }
 }
