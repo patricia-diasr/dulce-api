@@ -28,3 +28,5 @@ app:
     expiration-minutes: ${APP_JWT_EXPIRATION_MINUTES:480}
   verification-code:
     expiration-minutes: 10
+  mail:
+    from: ${APP_MAIL_FROM:Dulce <no-reply@dulce.local>}
