@@ -1,15 +1,25 @@
 package com.dulce.backend.customer;
 
+import com.dulce.backend.customer.dto.CustomerDetailResponse;
+import com.dulce.backend.customer.dto.CustomerPageResponse;
 import com.dulce.backend.customer.dto.CustomerRegistrationRequest;
 import com.dulce.backend.customer.dto.CustomerResponse;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+@Validated
 @RestController
 @RequestMapping("/api/customers")
 public class CustomerController {
@@ -25,5 +35,22 @@ public class CustomerController {
             @Valid @RequestBody CustomerRegistrationRequest request) {
         CustomerResponse response = customerService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping
+    public CustomerPageResponse list(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String phone,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
+        return customerService.list(name, email, phone, page, size);
+    }
+
+    @PreAuthorize("hasRole('ADMIN') or #id.equals(authentication.principal.id())")
+    @GetMapping("/{id}")
+    public CustomerDetailResponse getById(@PathVariable Long id) {
+        return customerService.getDetailById(id);
     }
 }
