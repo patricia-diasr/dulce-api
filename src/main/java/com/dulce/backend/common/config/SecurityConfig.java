@@ -48,6 +48,12 @@ public class SecurityConfig {
                                         .permitAll()
                                         .requestMatchers("/api/admin/**")
                                         .hasRole("ADMIN")
+                                        .requestMatchers(HttpMethod.POST, "/api/flavors/**")
+                                        .hasRole("ADMIN")
+                                        .requestMatchers(HttpMethod.PATCH, "/api/flavors/**")
+                                        .hasRole("ADMIN")
+                                        .requestMatchers(HttpMethod.DELETE, "/api/flavors/**")
+                                        .hasRole("ADMIN")
                                         .anyRequest()
                                         .authenticated())
                 .addFilterBefore(
