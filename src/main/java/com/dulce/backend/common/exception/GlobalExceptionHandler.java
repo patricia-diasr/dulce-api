@@ -3,10 +3,13 @@ package com.dulce.backend.common.exception;
 import com.dulce.backend.auth.InvalidCredentialsException;
 import com.dulce.backend.customer.DuplicateEmailException;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import java.time.Instant;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -109,6 +112,38 @@ public class GlobalExceptionHandler {
                                 409,
                                 "Conflict",
                                 ex.getMessage(),
+                                request.getRequestURI()));
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiError> handleConstraintViolation(
+            ConstraintViolationException ex, HttpServletRequest request) {
+        String message =
+                ex.getConstraintViolations().stream()
+                        .findFirst()
+                        .map(ConstraintViolation::getMessage)
+                        .orElse("Parâmetro inválido.");
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(
+                        new ApiError(
+                                Instant.now(),
+                                400,
+                                "Bad Request",
+                                message,
+                                request.getRequestURI()));
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiError> handleAccessDenied(
+            AccessDeniedException ex, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(
+                        new ApiError(
+                                Instant.now(),
+                                403,
+                                "Forbidden",
+                                "Acesso negado.",
                                 request.getRequestURI()));
     }
 
