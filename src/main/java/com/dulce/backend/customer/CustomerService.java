@@ -7,6 +7,7 @@ import com.dulce.backend.customer.dto.CustomerPageResponse;
 import com.dulce.backend.customer.dto.CustomerRegistrationRequest;
 import com.dulce.backend.customer.dto.CustomerResponse;
 import com.dulce.backend.customer.dto.CustomerSummaryResponse;
+import com.dulce.backend.customer.dto.CustomerUpdateRequest;
 import com.dulce.backend.order.CakeOrderRepository;
 import com.dulce.backend.order.OrderMapper;
 import com.dulce.backend.order.dto.OrderSummaryResponse;
@@ -40,7 +41,10 @@ public class CustomerService {
         if (!isAdminRequest && (request.email() == null || request.email().isBlank())) {
             throw new BadRequestException("E-mail é obrigatório.");
         }
-
+        if (!isAdminRequest && request.notes() != null) {
+            throw new BadRequestException(
+                    "Observações só podem ser cadastradas pelo administrador.");
+        }
         if (request.email() != null && customerRepository.existsByEmail(request.email())) {
             throw new DuplicateEmailException("Já existe um cliente cadastrado com este e-mail.");
         }
@@ -49,11 +53,44 @@ public class CustomerService {
         customer.setName(request.name());
         customer.setEmail(request.email());
         customer.setPhone(request.phone());
+        customer.setNotes(request.notes());
 
         Customer saved = customerRepository.save(customer);
 
         return new CustomerResponse(
-                saved.getId(), saved.getName(), saved.getEmail(), saved.getPhone());
+                saved.getId(),
+                saved.getName(),
+                saved.getEmail(),
+                saved.getPhone(),
+                saved.getNotes());
+    }
+
+    @Transactional
+    public CustomerSummaryResponse update(Long id, CustomerUpdateRequest request) {
+        Customer customer =
+                customerRepository
+                        .findById(id)
+                        .orElseThrow(
+                                () -> new ResourceNotFoundException("Cliente não encontrado."));
+
+        if (request.name() != null) {
+            customer.setName(request.name());
+        }
+        if (request.email() != null) {
+            if (customerRepository.existsByEmailAndIdNot(request.email(), id)) {
+                throw new DuplicateEmailException(
+                        "Já existe um cliente cadastrado com este e-mail.");
+            }
+            customer.setEmail(request.email());
+        }
+        if (request.phone() != null) {
+            customer.setPhone(request.phone());
+        }
+        if (request.notes() != null) {
+            customer.setNotes(request.notes());
+        }
+
+        return toSummary(customer);
     }
 
     @Transactional(readOnly = true)

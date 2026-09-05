@@ -6,6 +6,8 @@ import com.dulce.backend.customer.dto.CustomerDetailResponse;
 import com.dulce.backend.customer.dto.CustomerPageResponse;
 import com.dulce.backend.customer.dto.CustomerRegistrationRequest;
 import com.dulce.backend.customer.dto.CustomerResponse;
+import com.dulce.backend.customer.dto.CustomerSummaryResponse;
+import com.dulce.backend.customer.dto.CustomerUpdateRequest;
 import com.dulce.backend.order.OrderService;
 import com.dulce.backend.order.dto.OrderContentRequest;
 import com.dulce.backend.order.dto.OrderResponse;
@@ -18,6 +20,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -62,6 +65,13 @@ public class CustomerController {
     @GetMapping("/{id}")
     public CustomerDetailResponse getById(@PathVariable Long id) {
         return customerService.getDetailById(id);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PatchMapping("/{id}")
+    public CustomerSummaryResponse update(
+            @PathVariable Long id, @Valid @RequestBody CustomerUpdateRequest request) {
+        return customerService.update(id, request);
     }
 
     @PreAuthorize("hasRole('ADMIN') or #customerId.equals(authentication.principal.id())")
