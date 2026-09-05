@@ -50,6 +50,25 @@ public class GlobalExceptionHandler {
                                 request.getRequestURI()));
     }
 
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiError> handleConstraintViolation(
+            ConstraintViolationException ex, HttpServletRequest request) {
+        String message =
+                ex.getConstraintViolations().stream()
+                        .findFirst()
+                        .map(ConstraintViolation::getMessage)
+                        .orElse("Parâmetro inválido.");
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(
+                        new ApiError(
+                                Instant.now(),
+                                400,
+                                "Bad Request",
+                                message,
+                                request.getRequestURI()));
+    }
+
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ApiError> handleBadRequest(
             BadRequestException ex, HttpServletRequest request) {
@@ -89,6 +108,29 @@ public class GlobalExceptionHandler {
                                 request.getRequestURI()));
     }
 
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiError> handleAccessDenied(
+            AccessDeniedException ex, HttpServletRequest request) {
+        String message = ex.getMessage() != null ? ex.getMessage() : "Acesso negado.";
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(
+                        new ApiError(
+                                Instant.now(), 403, "Forbidden", message, request.getRequestURI()));
+    }
+
+    @ExceptionHandler(InvalidOrderStateException.class)
+    public ResponseEntity<ApiError> handleInvalidOrderState(
+            InvalidOrderStateException ex, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(
+                        new ApiError(
+                                Instant.now(),
+                                409,
+                                "Conflict",
+                                ex.getMessage(),
+                                request.getRequestURI()));
+    }
+
     @ExceptionHandler(DuplicateEmailException.class)
     public ResponseEntity<ApiError> handleDuplicateEmail(
             DuplicateEmailException ex, HttpServletRequest request) {
@@ -112,38 +154,6 @@ public class GlobalExceptionHandler {
                                 409,
                                 "Conflict",
                                 ex.getMessage(),
-                                request.getRequestURI()));
-    }
-
-    @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<ApiError> handleConstraintViolation(
-            ConstraintViolationException ex, HttpServletRequest request) {
-        String message =
-                ex.getConstraintViolations().stream()
-                        .findFirst()
-                        .map(ConstraintViolation::getMessage)
-                        .orElse("Parâmetro inválido.");
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(
-                        new ApiError(
-                                Instant.now(),
-                                400,
-                                "Bad Request",
-                                message,
-                                request.getRequestURI()));
-    }
-
-    @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ApiError> handleAccessDenied(
-            AccessDeniedException ex, HttpServletRequest request) {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(
-                        new ApiError(
-                                Instant.now(),
-                                403,
-                                "Forbidden",
-                                "Acesso negado.",
                                 request.getRequestURI()));
     }
 

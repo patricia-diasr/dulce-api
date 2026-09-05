@@ -8,12 +8,12 @@ import jakarta.validation.constraints.Size;
 
 public record CustomerRegistrationRequest(
         @NotBlank @Size(max = 150) String name,
-        @NotBlank @StrictEmail @Size(max = 255) String email,
+        @StrictEmail @Size(max = 255) String email,
         @NotBlank @Size(max = 30) @Phone String phone) {
 
     public CustomerRegistrationRequest {
         name = name == null ? null : name.trim();
-        email = email == null ? null : email.trim().toLowerCase();
+        email = (email == null || email.isBlank()) ? null : email.trim().toLowerCase();
         phone = phone == null ? null : PhoneNormalizer.normalize(phone);
     }
 }

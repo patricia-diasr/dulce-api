@@ -1,15 +1,21 @@
 package com.dulce.backend.customer;
 
+import com.dulce.backend.auth.AuthenticatedUser;
+import com.dulce.backend.auth.Role;
 import com.dulce.backend.customer.dto.CustomerDetailResponse;
 import com.dulce.backend.customer.dto.CustomerPageResponse;
 import com.dulce.backend.customer.dto.CustomerRegistrationRequest;
 import com.dulce.backend.customer.dto.CustomerResponse;
+import com.dulce.backend.order.OrderService;
+import com.dulce.backend.order.dto.OrderContentRequest;
+import com.dulce.backend.order.dto.OrderResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,15 +31,19 @@ import org.springframework.web.bind.annotation.RestController;
 public class CustomerController {
 
     private final CustomerService customerService;
+    private final OrderService orderService;
 
-    public CustomerController(CustomerService customerService) {
+    public CustomerController(CustomerService customerService, OrderService orderService) {
         this.customerService = customerService;
+        this.orderService = orderService;
     }
 
     @PostMapping
     public ResponseEntity<CustomerResponse> register(
-            @Valid @RequestBody CustomerRegistrationRequest request) {
-        CustomerResponse response = customerService.register(request);
+            @Valid @RequestBody CustomerRegistrationRequest request,
+            @AuthenticationPrincipal AuthenticatedUser requester) {
+        boolean isAdminRequest = requester != null && requester.role() == Role.ADMIN;
+        CustomerResponse response = customerService.register(request, isAdminRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -52,5 +62,15 @@ public class CustomerController {
     @GetMapping("/{id}")
     public CustomerDetailResponse getById(@PathVariable Long id) {
         return customerService.getDetailById(id);
+    }
+
+    @PreAuthorize("hasRole('ADMIN') or #customerId.equals(authentication.principal.id())")
+    @PostMapping("/{customerId}/orders")
+    public ResponseEntity<OrderResponse> createOrder(
+            @PathVariable Long customerId,
+            @Valid @RequestBody OrderContentRequest request,
+            @AuthenticationPrincipal AuthenticatedUser requester) {
+        OrderResponse response = orderService.create(customerId, request, requester);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }

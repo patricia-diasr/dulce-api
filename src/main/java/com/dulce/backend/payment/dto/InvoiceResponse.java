@@ -9,4 +9,5 @@ public record InvoiceResponse(
         BigDecimal grossAmount,
         BigDecimal discount,
         InvoiceStatus status,
+        BigDecimal refundDue,
         List<PaymentResponse> payments) {}
