@@ -24,21 +24,22 @@ public class JwtService {
         this.expirationMinutes = expirationMinutes;
     }
 
-    public AuthResponse generateAuthResponse(String subjectEmail, Role role, Long id, String name) {
+    public AuthResponse generateAuthResponse(
+            String subjectEmail, Role role, Long user, String name) {
         OffsetDateTime expiresAt = OffsetDateTime.now().plusMinutes(expirationMinutes);
 
         String token =
                 Jwts.builder()
                         .subject(subjectEmail)
                         .claim("role", role.name())
-                        .claim("id", id)
+                        .claim("user", user)
                         .claim("name", name)
                         .issuedAt(new Date())
                         .expiration(Date.from(expiresAt.toInstant()))
                         .signWith(key)
                         .compact();
 
-        return new AuthResponse(token, role.name(), name, expiresAt);
+        return new AuthResponse(token, user, role.name(), name, expiresAt);
     }
 
     public Claims parseClaims(String token) {
