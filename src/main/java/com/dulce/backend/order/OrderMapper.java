@@ -34,6 +34,7 @@ public class OrderMapper {
                 order.getId(),
                 order.getCustomer().getId(),
                 order.getCustomer().getName(),
+                order.getCustomer().getPhone(),
                 order.getCreatedAt(),
                 order.getPickupAt(),
                 order.getCompletedAt(),

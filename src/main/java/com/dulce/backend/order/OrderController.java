@@ -6,6 +6,7 @@ import com.dulce.backend.order.dto.OrderResponse;
 import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,6 +22,12 @@ public class OrderController {
 
     public OrderController(OrderService orderService) {
         this.orderService = orderService;
+    }
+
+    @GetMapping("/{orderId}")
+    public OrderResponse getById(
+            @PathVariable Long orderId, @AuthenticationPrincipal AuthenticatedUser requester) {
+        return orderService.getById(orderId, requester);
     }
 
     @PatchMapping("/{orderId}")

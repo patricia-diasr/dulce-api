@@ -146,6 +146,15 @@ public class OrderService {
         return orderMapper.toResponse(order);
     }
 
+    @Transactional(readOnly = true)
+    public OrderResponse getById(Long orderId, AuthenticatedUser requester) {
+        CakeOrder order = findOrderOrThrow(orderId);
+        if (requester.role() != Role.ADMIN) {
+            requireOwnership(order, requester);
+        }
+        return orderMapper.toResponse(order);
+    }
+
     @Transactional
     public OrderResponse accept(Long orderId) {
         CakeOrder order = findOrderOrThrow(orderId);

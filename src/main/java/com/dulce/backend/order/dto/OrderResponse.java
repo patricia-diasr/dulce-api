@@ -10,6 +10,7 @@ public record OrderResponse(
         Long id,
         Long customerId,
         String customerName,
+        String customerPhone,
         OffsetDateTime createdAt,
         OffsetDateTime pickupAt,
         OffsetDateTime completedAt,
