@@ -9,5 +9,7 @@ public interface CustomerRepository
 
     boolean existsByEmail(String email);
 
+    boolean existsByEmailAndIdNot(String email, Long id);
+
     Optional<Customer> findByEmail(String email);
 }
