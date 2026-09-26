@@ -41,10 +41,12 @@ public class CustomerService {
         if (!isAdminRequest && (request.email() == null || request.email().isBlank())) {
             throw new BadRequestException("E-mail é obrigatório.");
         }
+
         if (!isAdminRequest && request.notes() != null) {
             throw new BadRequestException(
                     "Observações só podem ser cadastradas pelo administrador.");
         }
+
         if (request.email() != null && customerRepository.existsByEmail(request.email())) {
             throw new DuplicateEmailException("Já existe um cliente cadastrado com este e-mail.");
         }
@@ -76,16 +78,20 @@ public class CustomerService {
         if (request.name() != null) {
             customer.setName(request.name());
         }
+
         if (request.email() != null) {
             if (customerRepository.existsByEmailAndIdNot(request.email(), id)) {
                 throw new DuplicateEmailException(
                         "Já existe um cliente cadastrado com este e-mail.");
             }
+
             customer.setEmail(request.email());
         }
+
         if (request.phone() != null) {
             customer.setPhone(request.phone());
         }
+
         if (request.notes() != null) {
             customer.setNotes(request.notes());
         }

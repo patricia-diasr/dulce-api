@@ -5,5 +5,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ScheduleBlockRepository extends JpaRepository<ScheduleBlock, Long> {
 
-    List<ScheduleBlock> findByActiveTrue();
+    List<ScheduleBlock> findByActive(boolean active);
 }
