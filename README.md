@@ -37,7 +37,7 @@ de gestão de encomendas de uma confeitaria artesanal. Este repositório contém
 ## Variáveis de ambiente
 
 | Variável | Obrigatória | Default (dev) | Descrição |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `SPRING_PROFILES_ACTIVE` | não | `dev` | Perfil ativo (`dev` ou `prod`) |
 | `SERVER_PORT` | não | `8080` | Porta da API |
 | `DB_HOST` | não (dev) / sim (prod) | `localhost` | Host do PostgreSQL |

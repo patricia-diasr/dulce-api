@@ -14,6 +14,9 @@ import com.dulce.backend.common.exception.ResourceNotFoundException;
 import com.dulce.backend.customer.Customer;
 import com.dulce.backend.customer.CustomerRepository;
 import com.dulce.backend.notification.NotificationService;
+import com.dulce.backend.order.dto.OrderCalendarItemResponse;
+import com.dulce.backend.order.dto.OrderCalendarPageResponse;
+import com.dulce.backend.order.dto.OrderCalendarSummaryResponse;
 import com.dulce.backend.order.dto.OrderContentRequest;
 import com.dulce.backend.order.dto.OrderItemRequest;
 import com.dulce.backend.order.dto.OrderResponse;
@@ -25,12 +28,17 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.List;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class OrderService {
+
+    private static final java.time.ZoneId BUSINESS_ZONE = java.time.ZoneId.of("America/Sao_Paulo");
 
     private static final Duration MIN_CREATE_LEAD_TIME = Duration.ofHours(72);
     private static final Duration MIN_EDIT_LEAD_TIME = Duration.ofHours(72);
@@ -149,9 +157,11 @@ public class OrderService {
     @Transactional(readOnly = true)
     public OrderResponse getById(Long orderId, AuthenticatedUser requester) {
         CakeOrder order = findOrderOrThrow(orderId);
+
         if (requester.role() != Role.ADMIN) {
             requireOwnership(order, requester);
         }
+
         return orderMapper.toResponse(order);
     }
 
@@ -224,6 +234,48 @@ public class OrderService {
         notificationService.notifyOrderCompleted(order.getId());
 
         return orderMapper.toResponse(order);
+    }
+
+    @Transactional(readOnly = true)
+    public OrderCalendarPageResponse listCalendar(
+            java.time.LocalDate from,
+            java.time.LocalDate to,
+            OrderStatus status,
+            int page,
+            int size) {
+        if ((from == null) != (to == null)) {
+            throw new BadRequestException("Informe as duas datas do período, ou nenhuma.");
+        }
+
+        if (from != null && to.isBefore(from)) {
+            throw new BadRequestException("Data final não pode ser anterior à data inicial.");
+        }
+
+        OffsetDateTime fromInstant =
+                from == null ? null : from.atStartOfDay(BUSINESS_ZONE).toOffsetDateTime();
+        OffsetDateTime toInstant =
+                to == null
+                        ? null
+                        : to.atTime(java.time.LocalTime.MAX)
+                                .atZone(BUSINESS_ZONE)
+                                .toOffsetDateTime();
+
+        var spec =
+                Specification.where(CakeOrderSpecifications.pickupBetween(fromInstant, toInstant))
+                        .and(CakeOrderSpecifications.statusEquals(status));
+
+        var pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "pickupAt"));
+        var result = cakeOrderRepository.findAll(spec, pageable);
+
+        List<OrderCalendarSummaryResponse> content =
+                result.getContent().stream().map(this::toCalendarSummary).toList();
+
+        return new OrderCalendarPageResponse(
+                content,
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements(),
+                result.getTotalPages());
     }
 
     private CakeOrder findOrderOrThrow(Long orderId) {
@@ -349,5 +401,25 @@ public class OrderService {
         }
 
         return requestedDiscount;
+    }
+
+    private OrderCalendarSummaryResponse toCalendarSummary(CakeOrder order) {
+        List<OrderCalendarItemResponse> items =
+                orderItemRepository.findByCakeOrderId(order.getId()).stream()
+                        .map(
+                                item ->
+                                        new OrderCalendarItemResponse(
+                                                item.getFlavor().getName(),
+                                                item.getSize().getName()))
+                        .toList();
+
+        return new OrderCalendarSummaryResponse(
+                order.getId(),
+                order.getCustomer().getId(),
+                order.getCustomer().getName(),
+                order.getPickupAt(),
+                order.getStatus(),
+                order.getNotes(),
+                items);
     }
 }
