@@ -62,7 +62,7 @@ public class PaymentService {
         payment = paymentRepository.save(payment);
 
         recalculateInvoiceStatus(invoice);
-        notificationService.notifyPaymentRegistered(order.getId(), payment.getId());
+        notificationService.notifyPaymentUpdated(order.getId());
 
         return orderMapper.toInvoiceResponse(invoice);
     }
@@ -87,6 +87,7 @@ public class PaymentService {
         paymentRepository.save(payment);
         recalculateInvoiceStatus(invoice);
 
+        notificationService.notifyPaymentUpdated(orderId);
         return orderMapper.toInvoiceResponse(invoice);
     }
 
@@ -97,6 +98,7 @@ public class PaymentService {
 
         paymentRepository.delete(payment);
         recalculateInvoiceStatus(invoice);
+        notificationService.notifyPaymentUpdated(orderId);
     }
 
     private CakeOrder findOrderOrThrow(Long orderId) {
