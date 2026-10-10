@@ -18,5 +18,7 @@ public interface NotificationService {
 
     void notifyOrderCompleted(Long orderId);
 
-    void notifyPaymentRegistered(Long orderId, Long paymentId);
+    void notifyPaymentUpdated(Long orderId);
+
+    void notifyPickupReminder(Long orderId);
 }
