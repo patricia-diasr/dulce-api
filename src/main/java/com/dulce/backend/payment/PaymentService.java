@@ -24,18 +24,21 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final OrderMapper orderMapper;
     private final NotificationService notificationService;
+    private final InvoiceStatusUpdater invoiceStatusUpdater;
 
     public PaymentService(
             CakeOrderRepository cakeOrderRepository,
             InvoiceRepository invoiceRepository,
             PaymentRepository paymentRepository,
             OrderMapper orderMapper,
-            NotificationService notificationService) {
+            NotificationService notificationService,
+            InvoiceStatusUpdater invoiceStatusUpdater) {
         this.cakeOrderRepository = cakeOrderRepository;
         this.invoiceRepository = invoiceRepository;
         this.paymentRepository = paymentRepository;
         this.orderMapper = orderMapper;
         this.notificationService = notificationService;
+        this.invoiceStatusUpdater = invoiceStatusUpdater;
     }
 
     @Transactional
@@ -136,20 +139,6 @@ public class PaymentService {
     }
 
     private void recalculateInvoiceStatus(Invoice invoice) {
-        BigDecimal paid =
-                paymentRepository.findByInvoiceId(invoice.getId()).stream()
-                        .map(Payment::getAmount)
-                        .reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal due = invoice.getGrossAmount().subtract(invoice.getDiscount());
-
-        if (paid.compareTo(BigDecimal.ZERO) <= 0) {
-            invoice.setStatus(InvoiceStatus.PENDING);
-        } else if (paid.compareTo(due) >= 0) {
-            invoice.setStatus(InvoiceStatus.PAID);
-        } else {
-            invoice.setStatus(InvoiceStatus.PARTIAL);
-        }
-
-        invoiceRepository.save(invoice);
+        invoiceStatusUpdater.recalculate(invoice);
     }
 }

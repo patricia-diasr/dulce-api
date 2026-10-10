@@ -23,6 +23,7 @@ import com.dulce.backend.order.dto.OrderResponse;
 import com.dulce.backend.payment.Invoice;
 import com.dulce.backend.payment.InvoiceRepository;
 import com.dulce.backend.payment.InvoiceStatus;
+import com.dulce.backend.payment.InvoiceStatusUpdater;
 import com.dulce.backend.schedule.ScheduleBlockChecker;
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -54,6 +55,7 @@ public class OrderService {
     private final ScheduleBlockChecker scheduleBlockChecker;
     private final OrderMapper orderMapper;
     private final NotificationService notificationService;
+    private final InvoiceStatusUpdater invoiceStatusUpdater;
 
     public OrderService(
             CakeOrderRepository cakeOrderRepository,
@@ -65,7 +67,8 @@ public class OrderService {
             FlavorSizeRepository flavorSizeRepository,
             ScheduleBlockChecker scheduleBlockChecker,
             OrderMapper orderMapper,
-            NotificationService notificationService) {
+            NotificationService notificationService,
+            InvoiceStatusUpdater invoiceStatusUpdater) {
         this.cakeOrderRepository = cakeOrderRepository;
         this.orderItemRepository = orderItemRepository;
         this.invoiceRepository = invoiceRepository;
@@ -76,6 +79,7 @@ public class OrderService {
         this.scheduleBlockChecker = scheduleBlockChecker;
         this.orderMapper = orderMapper;
         this.notificationService = notificationService;
+        this.invoiceStatusUpdater = invoiceStatusUpdater;
     }
 
     @Transactional
@@ -143,7 +147,7 @@ public class OrderService {
                 resolveDiscount(request.discount(), isAdmin, itemsTotal, invoice.getDiscount());
         invoice.setGrossAmount(itemsTotal);
         invoice.setDiscount(discount);
-        invoiceRepository.save(invoice);
+        invoiceStatusUpdater.recalculate(invoice);
 
         if (!isAdmin && order.getStatus() == OrderStatus.ACCEPTED) {
             order.setStatus(OrderStatus.PENDING);
