@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "size")
@@ -20,6 +21,9 @@ public class Size {
 
     @Column(name = "max_message_length", nullable = false)
     private Short maxMessageLength;
+
+    @Column(name = "weight_kg", nullable = false, precision = 5, scale = 2)
+    private BigDecimal weightKg;
 
     public Long getId() {
         return id;
@@ -39,5 +43,13 @@ public class Size {
 
     public void setMaxMessageLength(Short maxMessageLength) {
         this.maxMessageLength = maxMessageLength;
+    }
+
+    public BigDecimal getWeightKg() {
+        return weightKg;
+    }
+
+    public void setWeightKg(BigDecimal weightKg) {
+        this.weightKg = weightKg;
     }
 }
