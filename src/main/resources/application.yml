@@ -30,3 +30,6 @@ app:
     expiration-minutes: 10
   mail:
     from: ${APP_MAIL_FROM:Dulce <no-reply@dulce.local>}
+  audit:
+    retention-days: ${APP_AUDIT_RETENTION_DAYS:90}
+    purge-cron: "${APP_AUDIT_PURGE_CRON:0 0 3 * * *}"
