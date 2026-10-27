@@ -13,8 +13,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
@@ -31,6 +34,7 @@ public class EmailNotificationService implements NotificationService {
     private final NotificationHistoryRepository notificationHistoryRepository;
     private final NotificationVariablesBuilder variablesBuilder;
     private final TemplateHtmlSanitizer sanitizer;
+    private final TransactionTemplate newTransaction;
 
     public EmailNotificationService(
             JavaMailSender mailSender,
@@ -40,7 +44,8 @@ public class EmailNotificationService implements NotificationService {
             CakeOrderRepository cakeOrderRepository,
             NotificationHistoryRepository notificationHistoryRepository,
             NotificationVariablesBuilder variablesBuilder,
-            TemplateHtmlSanitizer sanitizer) {
+            TemplateHtmlSanitizer sanitizer,
+            PlatformTransactionManager transactionManager) {
         this.mailSender = mailSender;
         this.templateEngine = templateEngine;
         this.fromAddress = fromAddress;
@@ -49,19 +54,19 @@ public class EmailNotificationService implements NotificationService {
         this.notificationHistoryRepository = notificationHistoryRepository;
         this.variablesBuilder = variablesBuilder;
         this.sanitizer = sanitizer;
+        this.newTransaction = new TransactionTemplate(transactionManager);
+        this.newTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
 
     @Override
-    public void send(
-            String to, String subject, String templateName, Map<String, Object> variables) {
+    public void send(String to, String subject, String templateName, Map<String, Object> variables) {
         Context context = new Context();
         context.setVariables(variables);
         String html = templateEngine.process(templateName, context);
 
         try {
             MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper =
-                    new MimeMessageHelper(message, StandardCharsets.UTF_8.name());
+            MimeMessageHelper helper = new MimeMessageHelper(message, StandardCharsets.UTF_8.name());
             helper.setTo(to);
             helper.setFrom(fromAddress);
             helper.setSubject(subject);
@@ -74,104 +79,107 @@ public class EmailNotificationService implements NotificationService {
     }
 
     @Override
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void notifyOrderCreated(Long orderId) {
-        sendOrderNotification(NotificationTypeCode.ORDER_CREATED, orderId);
+        dispatch(NotificationTypeCode.ORDER_CREATED, orderId);
     }
 
     @Override
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void notifyOrderUpdated(Long orderId) {
-        sendOrderNotification(NotificationTypeCode.ORDER_UPDATED, orderId);
+        dispatch(NotificationTypeCode.ORDER_UPDATED, orderId);
     }
 
     @Override
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void notifyOrderAccepted(Long orderId) {
-        sendOrderNotification(NotificationTypeCode.ORDER_ACCEPTED, orderId);
+        dispatch(NotificationTypeCode.ORDER_ACCEPTED, orderId);
     }
 
     @Override
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void notifyOrderRejected(Long orderId) {
-        sendOrderNotification(NotificationTypeCode.ORDER_REJECTED, orderId);
+        dispatch(NotificationTypeCode.ORDER_REJECTED, orderId);
     }
 
     @Override
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void notifyOrderCanceled(Long orderId) {
-        sendOrderNotification(NotificationTypeCode.ORDER_CANCELED, orderId);
+        dispatch(NotificationTypeCode.ORDER_CANCELED, orderId);
     }
 
     @Override
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void notifyOrderCompleted(Long orderId) {
-        sendOrderNotification(NotificationTypeCode.ORDER_COMPLETED, orderId);
+        dispatch(NotificationTypeCode.ORDER_COMPLETED, orderId);
     }
 
     @Override
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void notifyPaymentUpdated(Long orderId) {
-        sendOrderNotification(NotificationTypeCode.PAYMENT_UPDATED, orderId);
+        dispatch(NotificationTypeCode.PAYMENT_UPDATED, orderId);
     }
 
     @Override
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void notifyPickupReminder(Long orderId) {
-        sendOrderNotification(NotificationTypeCode.PICKUP_REMINDER, orderId);
+        dispatch(NotificationTypeCode.PICKUP_REMINDER, orderId);
+    }
+
+    private void dispatch(NotificationTypeCode code, Long orderId) {
+        Runnable task =
+                () -> {
+                    try {
+                        newTransaction.executeWithoutResult(status -> sendOrderNotification(code, orderId));
+                    } catch (Exception e) {
+                        log.error("Falha ao enviar notificação {} para o pedido {}.", code, orderId, e);
+                    }
+                };
+
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(
+                    new TransactionSynchronization() {
+                        @Override
+                        public void afterCommit() {
+                            task.run();
+                        }
+                    });
+        } else {
+            task.run();
+        }
     }
 
     private void sendOrderNotification(NotificationTypeCode code, Long orderId) {
-        try {
-            CakeOrder order =
-                    cakeOrderRepository
-                            .findById(orderId)
-                            .orElseThrow(
-                                    () ->
-                                            new IllegalStateException(
-                                                    "Pedido não encontrado: " + orderId));
+        CakeOrder order =
+                cakeOrderRepository
+                        .findById(orderId)
+                        .orElseThrow(() -> new IllegalStateException("Pedido não encontrado: " + orderId));
 
-            if (order.getCustomer().getEmail() == null) {
-                log.info(
-                        "Cliente {} não tem e-mail cadastrado — notificação {} não enviada.",
-                        order.getCustomer().getId(),
-                        code);
-                return;
-            }
-
-            NotificationType type =
-                    notificationTypeRepository
-                            .findByCode(code.name())
-                            .orElseThrow(
-                                    () ->
-                                            new IllegalStateException(
-                                                    "Template de notificação não encontrado: "
-                                                            + code));
-
-            Map<String, String> variables = variablesBuilder.buildForOrder(orderId);
-            String subject =
-                    TemplateSubstitution.apply(type.getSubject(), variables)
-                            .replaceAll("[\r\n]+", " ");
-            String bodyHtml =
-                    sanitizer.sanitize(
-                            TemplateSubstitution.apply(type.getTemplateContent(), variables));
-
-            send(
-                    order.getCustomer().getEmail(),
-                    subject,
-                    "email/notification-shell",
-                    Map.of("subject", subject, "bodyHtml", bodyHtml));
-
-            NotificationHistory history = new NotificationHistory();
-            history.setNotificationType(type);
-            history.setCakeOrder(order);
-            history.setCustomer(order.getCustomer());
-            history.setEmail(order.getCustomer().getEmail());
-            history.setContent(bodyHtml);
-            history.setSentAt(OffsetDateTime.now());
-            notificationHistoryRepository.save(history);
-        } catch (Exception e) {
-            log.error("Falha ao enviar notificação {} para o pedido {}.", code, orderId, e);
+        if (order.getCustomer().getEmail() == null) {
+            log.info(
+                    "Cliente {} não tem e-mail cadastrado — notificação {} não enviada.",
+                    order.getCustomer().getId(),
+                    code);
+            return;
         }
+
+        NotificationType type =
+                notificationTypeRepository
+                        .findByCode(code.name())
+                        .orElseThrow(
+                                () -> new IllegalStateException("Template de notificação não encontrado: " + code));
+
+        Map<String, String> variables = variablesBuilder.buildForOrder(orderId);
+        String subject =
+                TemplateSubstitution.apply(type.getSubject(), variables).replaceAll("[\r\n]+", " ");
+        String bodyHtml =
+                sanitizer.sanitize(TemplateSubstitution.apply(type.getTemplateContent(), variables));
+
+        send(
+                order.getCustomer().getEmail(),
+                subject,
+                "email/notification-shell",
+                Map.of("subject", subject, "bodyHtml", bodyHtml));
+
+        NotificationHistory history = new NotificationHistory();
+        history.setNotificationType(type);
+        history.setCakeOrder(order);
+        history.setCustomer(order.getCustomer());
+        history.setEmail(order.getCustomer().getEmail());
+        history.setContent(bodyHtml);
+        history.setSentAt(OffsetDateTime.now());
+        notificationHistoryRepository.save(history);
     }
 }
