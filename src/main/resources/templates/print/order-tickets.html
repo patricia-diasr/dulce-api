@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<title>Tickets de pedidos</title>
+<style type="text/css">
+@page { size: A4; margin: 0.5cm; }
+body { margin: 0; font-family: Arial, Helvetica, sans-serif; color: #4A342A; font-size: 9pt; }
+table.sheet { width: 100%; border-collapse: collapse; table-layout: fixed; }
+table.sheet tr { page-break-inside: avoid; }
+td.t { width: 33.33%; padding: 0; border: 1px dashed #8C8C8C; vertical-align: top; }
+table.i { width: 100%; border-collapse: collapse; }
+table.i td { padding: 0.2cm 0.28cm; vertical-align: top; }
+table.i td.a { height: 0.35cm; font-size: 6.5pt; background-color: #F5F3F6; color: #6B4E8A; }
+table.i td.c { height: 0.85cm; border-bottom: 1px solid #E4DDEA; }
+table.i td.k { height: 4.55cm; }
+table.i td.b { height: 2.4cm; padding: 0; vertical-align: bottom; }
+td.a .r { float: right; }
+td.a .d { background-color: #6B4E8A; color: #FFFFFF; padding: 0 3px; margin-left: 3px; }
+.cn { font-size: 10.5pt; font-weight: bold; line-height: 1.2; color: #4A342A; }
+.cp { font-size: 9pt; color: #6B5A52; }
+.ti { font-size: 15pt; font-weight: bold; line-height: 1.15; color: #6B4E8A; }
+ul.s { margin: 0.15cm 0; padding: 0; list-style: none; font-size: 11pt; line-height: 1.35; }
+ul.s li.m { font-weight: bold; }
+.in { font-size: 8.5pt; line-height: 1.25; margin-top: 0.1cm; }
+.in b { color: #6B4E8A; }
+.pay { margin-top: 0.2cm; border: 1px solid #E4DDEA; background-color: #FBF7F4; color: #6B5A52; padding: 0.08cm 0.15cm; }
+.pay.o { border: 2px solid #6B4E8A; background-color: #F5F3F6; color: #6B4E8A; }
+.pl { font-size: 6.5pt; }
+.pv { font-size: 9.5pt; font-weight: bold; }
+.on { padding: 0 0.28cm 0.12cm 0.28cm; font-size: 7pt; line-height: 1.25; color: #6B5A52; }
+.on b { color: #4A342A; }
+.pk { padding: 0.15cm 0.28cm; background-color: #FBF7F4; border-top: 1px solid #E4DDEA; font-size: 10.5pt; font-weight: bold; color: #6B4E8A; }
+.nt { white-space: pre-line; }
+</style>
+</head>
+<body>
+<table class="sheet">
+<tr th:each="row : ${rows}">
+<td class="t" th:each="t : ${row}">
+<table class="i" th:if="${t != null}">
+<tr><td class="a"><span class="r"><span th:text="${t.cakeCounter()}">Bolo 1 de 1</span><span class="d" th:if="${t.completed()}">Concluído</span></span><span th:text="${t.headline()}">Pedido #1 · Cliente #1</span></td></tr>
+<tr><td class="c"><div class="cn" th:text="${t.customerName()}">Nome</div><div class="cp" th:text="${t.customerPhone()}">(11) 99999-9999</div></td></tr>
+<tr><td class="k"><div class="ti" th:text="${t.title()}">4 kg Brigadeiro</div>
+<ul class="s"><li th:text="${t.massLine()}">– Massa preta</li><li th:text="${t.toppingLine()}">– Raspa preta</li><li class="m" th:if="${t.messageLine() != null}" th:text="${t.messageLine()}">– “Parabéns”</li></ul>
+<div class="in" th:if="${t.itemNotes() != null}"><b>Obs. do bolo:</b> <span class="nt" th:text="${t.itemNotes()}">observação</span></div>
+<div class="pay" th:classappend="${t.paymentOpen()} ? 'o'"><div class="pl">Pagamento do pedido</div><div class="pv" th:text="${t.paymentLabel()}">Pago</div></div></td></tr>
+<tr><td class="b"><div class="on" th:if="${t.orderNotes() != null}"><b>Obs. do pedido:</b> <span class="nt" th:text="${t.orderNotes()}">observação</span></div><div class="pk" th:text="${t.pickupLabel()}">Retirada: sáb, 10/10 às 15:00</div></td></tr>
+</table>
+</td>
+</tr>
+</table>
+</body>
+</html>
