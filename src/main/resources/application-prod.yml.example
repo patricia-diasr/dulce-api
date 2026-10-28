@@ -7,17 +7,12 @@ spring:
   jpa:
     show-sql: false
 
+app:
   mail:
-    host: ${MAIL_HOST}
-    port: ${MAIL_PORT}
-    username: ${MAIL_USERNAME}
-    password: ${MAIL_PASSWORD}
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
+    provider: ${APP_MAIL_PROVIDER:resend}
+    from: ${APP_MAIL_FROM}
+    resend:
+      api-key: ${RESEND_API_KEY}
 
 logging:
   level:

@@ -45,10 +45,13 @@ de gestão de encomendas de uma confeitaria artesanal. Este repositório contém
 | `DB_NAME` | não (dev) / sim (prod) | `dulce_dev` | Nome do banco |
 | `DB_USERNAME` | não (dev) / sim (prod) | `dulce` | Usuário do banco |
 | `DB_PASSWORD` | não (dev) / sim (prod) | `dulce` | Senha do banco |
-| `MAIL_HOST` | não (dev) / sim (prod) | `localhost` | Host SMTP |
-| `MAIL_PORT` | não (dev) / sim (prod) | `1025` | Porta SMTP |
-| `MAIL_USERNAME` | não (dev) / sim (prod) | vazio | Usuário SMTP |
-| `MAIL_PASSWORD` | não (dev) / sim (prod) | vazio | Senha SMTP |
+| `MAIL_HOST` | não | `localhost` | Host SMTP (usado no perfil `dev` ou com `APP_MAIL_PROVIDER=smtp`) |
+| `MAIL_PORT` | não | `1025` | Porta SMTP |
+| `MAIL_USERNAME` | não | vazio | Usuário SMTP |
+| `MAIL_PASSWORD` | não | vazio | Senha SMTP |
+| `APP_MAIL_PROVIDER` | não | `smtp` | Transporte de e-mail: `smtp` localmente ou `resend` para deploy |
+| `APP_MAIL_FROM` | não (dev) / sim (Resend) | `Dulce <no-reply@dulce.local>` | Remetente; no Resend, deve pertencer a um domínio verificado |
+| `RESEND_API_KEY` | sim quando `APP_MAIL_PROVIDER=resend` | — | Chave secreta da API Resend |
 | `APP_JWT_SECRET` | **sim** | — | Segredo usado para assinar os tokens JWT |
 | `APP_JWT_EXPIRATION_MINUTES` | não | `480` | Validade do token JWT, em minutos |
 | `APP_CORS_ALLOWED_ORIGINS` | não | `http://localhost:5173` | Origem(ns) do frontend, separadas por vírgula |
@@ -56,6 +59,10 @@ de gestão de encomendas de uma confeitaria artesanal. Este repositório contém
 Em produção, essas variáveis devem ser configuradas diretamente na plataforma de hospedagem
 (ex.: Railway), nunca em arquivo versionado. `application-prod.yml` fica de fora do Git por isso
 (veja `application-prod.yml.example` como referência do que ele contém).
+
+O perfil `dev` mantém o envio SMTP. Para hospedagens que bloqueiam SMTP de saída, configure
+`APP_MAIL_PROVIDER=resend` e `RESEND_API_KEY`; defina `APP_MAIL_FROM` com um endereço de um domínio
+verificado na conta Resend. A implementação envia o HTML já renderizado pelo Thymeleaf via HTTPS.
 
 ## Estrutura de pastas
 

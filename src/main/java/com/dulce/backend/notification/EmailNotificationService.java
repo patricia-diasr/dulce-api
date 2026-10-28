@@ -2,16 +2,10 @@ package com.dulce.backend.notification;
 
 import com.dulce.backend.order.CakeOrder;
 import com.dulce.backend.order.CakeOrderRepository;
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
-import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -26,9 +20,8 @@ public class EmailNotificationService implements NotificationService {
 
     private static final Logger log = LoggerFactory.getLogger(EmailNotificationService.class);
 
-    private final JavaMailSender mailSender;
+    private final OutboundEmailSender emailSender;
     private final TemplateEngine templateEngine;
-    private final String fromAddress;
     private final NotificationTypeRepository notificationTypeRepository;
     private final CakeOrderRepository cakeOrderRepository;
     private final NotificationHistoryRepository notificationHistoryRepository;
@@ -37,18 +30,16 @@ public class EmailNotificationService implements NotificationService {
     private final TransactionTemplate newTransaction;
 
     public EmailNotificationService(
-            JavaMailSender mailSender,
+            OutboundEmailSender emailSender,
             TemplateEngine templateEngine,
-            @Value("${app.mail.from}") String fromAddress,
             NotificationTypeRepository notificationTypeRepository,
             CakeOrderRepository cakeOrderRepository,
             NotificationHistoryRepository notificationHistoryRepository,
             NotificationVariablesBuilder variablesBuilder,
             TemplateHtmlSanitizer sanitizer,
             PlatformTransactionManager transactionManager) {
-        this.mailSender = mailSender;
+        this.emailSender = emailSender;
         this.templateEngine = templateEngine;
-        this.fromAddress = fromAddress;
         this.notificationTypeRepository = notificationTypeRepository;
         this.cakeOrderRepository = cakeOrderRepository;
         this.notificationHistoryRepository = notificationHistoryRepository;
@@ -64,18 +55,7 @@ public class EmailNotificationService implements NotificationService {
         context.setVariables(variables);
         String html = templateEngine.process(templateName, context);
 
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, StandardCharsets.UTF_8.name());
-            helper.setTo(to);
-            helper.setFrom(fromAddress);
-            helper.setSubject(subject);
-            helper.setText(html, true);
-
-            mailSender.send(message);
-        } catch (MessagingException e) {
-            throw new EmailSendingException("Falha ao enviar e-mail para " + to, e);
-        }
+        emailSender.send(to, subject, html);
     }
 
     @Override
