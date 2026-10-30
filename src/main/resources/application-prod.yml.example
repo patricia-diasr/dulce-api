@@ -11,8 +11,12 @@ app:
   mail:
     provider: ${APP_MAIL_PROVIDER:resend}
     from: ${APP_MAIL_FROM}
+    sender-name: ${APP_MAIL_SENDER_NAME:Dulce}
+    reply-to: ${APP_MAIL_REPLY_TO:}
     resend:
       api-key: ${RESEND_API_KEY}
+    brevo:
+      api-key: ${APP_MAIL_BREVO_API_KEY}
 
 logging:
   level:
