@@ -29,6 +29,7 @@ app:
   verification-code:
     expiration-minutes: 10
   mail:
+    provider: ${APP_MAIL_PROVIDER:smtp}
     from: ${APP_MAIL_FROM:Dulce <no-reply@dulce.local>}
   audit:
     retention-days: ${APP_AUDIT_RETENTION_DAYS:90}
